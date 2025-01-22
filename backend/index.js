@@ -10,7 +10,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(express.json()); //allows us to parse incoming requests: req.body
-app.use(cookieParser());
+app.use(cookieParser()); //allows us to pass incoming cookies
 
 app.get('/', (req,res) => res.send("API is working"));
 
