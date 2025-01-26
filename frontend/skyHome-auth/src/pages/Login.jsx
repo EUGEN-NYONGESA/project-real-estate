@@ -1,17 +1,21 @@
 import { motion } from "framer-motion";
 import bgVideo from "../assets/estatevideoBG.mp4";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Input from "../components/Input";
-import { Lock, Mail, Loader } from "lucide-react";
+import { Lock, Mail, Loader, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import { AppContext } from "../components/context/AppContext";
 
 const Login = () => {
+  const { login, isLoading, error } = useContext(AppContext); // Access context
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const isLoading = false;
+  const [showPassword, setShowPassword] = useState(false); // Show/Hide password
 
+  // Handle form submission
   const handleLogin = (e) => {
     e.preventDefault();
+    login(email, password); // Call login from context
   };
 
   return (
@@ -52,14 +56,27 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
 
-              {/* Password Input */}
-              <Input
-                icon={Lock}
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              {/* Password Input with Show Password Toggle */}
+              <div className="relative">
+                <Input
+                  icon={Lock}
+                  type={showPassword ? "text" : "password"} // Toggle between "text" and "password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+
+              {/* Error Message */}
+              {error && <p className="text-red-500 font-semibold mt-2">{error}</p>}
 
               {/* Forgot Password Link */}
               <div className="flex items-center mb-6">
@@ -82,16 +99,20 @@ const Login = () => {
                 type="submit"
                 disabled={isLoading}
               >
-                {isLoading ? <Loader className = 'w-6 h-6 animate-spin mx-auto' /> : "Login"}
+                {isLoading ? (
+                  <Loader className="w-6 h-6 animate-spin mx-auto" />
+                ) : (
+                  "Login"
+                )}
               </motion.button>
             </form>
           </div>
           <div className="px-8 py-4 bg-gray-900 bg-opacity-50 flex justify-center">
             <p className="text-sm text-gray-400">
-                Don't have an account?{" "}
-                <Link to = {"/signup"} className='text-orange-400 hover:underline'>
-                    Sign up
-                </Link>
+              Don't have an account?{" "}
+              <Link to={"/signup"} className="text-orange-400 hover:underline">
+                Sign up
+              </Link>
             </p>
           </div>
         </motion.div>

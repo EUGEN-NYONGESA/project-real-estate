@@ -7,48 +7,59 @@ import { User } from "../models/user.model.js";
 
 
 export const signup = async (req, res) => {
-    const {email, password, name} = req.body;
-
+    let { email, password, name } = req.body;
+  
     try {
-        if(!email || !password || !name) {
-            throw new Error("Fill all the required fields");
-        }
-
-        const userAlreadyExists = await User.findOne({email});
-        if(userAlreadyExists) {
-            return res.status(400).json({ success: false, message: "User already exists" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-        const user = new User({
-            email,
-            password: hashedPassword,
-            name,
-            verificationToken,
-            verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000 //24 hours
-        })
-        await user.save();
-
-        //jwt and set cookie
-        generateTokenAndSetCookie(res, user._id);
-
-        await sendVerificationEmail(user.email, verificationToken);
-
-        res.status(201).json({
-            success: true,
-            message: "User created successfully",
-            user: {
-                ...user._doc, //spread the user document
-                password: undefined //Keep the password undefined
-            },
-        });
-
+      // Validate input
+      if (!email || !password || !name) {
+        return res
+          .status(400)
+          .json({ success: false, message: "All fields are required for registration!" });
+      }
+  
+      // Normalize email to lowercase
+      email = email.toLowerCase();
+  
+      // Check if the email already exists
+      const userAlreadyExists = await User.findOne({ email });
+      if (userAlreadyExists) {
+        return res
+          .status(400)
+          .json({ success: false, message: "The email is already registered to another user!" });
+      }
+  
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Generate verification token
+      const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+  
+      // Create a new user
+      const user = new User({
+        email,
+        password: hashedPassword,
+        name,
+        verificationToken,
+        verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+      });
+  
+      await user.save();
+  
+      // Send response
+      res.status(201).json({
+        success: true,
+        message: "Registration successful! OTP code sent to your email for account verification",
+      });
+  
+      // TODO: Add logic to send the OTP via email (e.g., using a mailer library)
     } catch (error) {
-        res.status(400).json({success: false, message: error.message})
+      console.error("Error in signup:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Registration failed! Try again later.",
+      });
     }
-};
+  };  
 
 export const verifyEmail = async (req, res) => {
     const {code} = req.body;
